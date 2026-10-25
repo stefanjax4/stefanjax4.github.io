@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="site-title">STEFANJAXONGAMES | Halloween Unblocked Arcade</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Outfit:wght@400;600;800;900&family=Orbitron:wght@700;900&display=swap');
+
+    * {
+      cursor: none !important; /* Custom candy corn cursor override */
+      user-select: none;
+    }
+
+    body {
+      background-color: #050505;
+      color: #f3f4f6;
+      font-family: 'Outfit', sans-serif;
+      overflow-x: hidden;
+      transition: background-color 0.5s ease, color 0.5s ease;
+    }
+
+    .font-spooky {
+      font-family: 'Creepster', cursive;
+    }
+
+    .font-modded {
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    /* Custom Candy Corn Cursor */
+    #custom-cursor {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 34px;
+      height: 34px;
+      pointer-events: none;
+      z-index: 999999;
+      transform: translate(-50%, -50%) scale(1);
+      transition: transform 0.08s ease-out;
+      filter: drop-shadow(0 0 6px rgba(255, 123, 0, 0.7));
+    }
+
+    #custom-cursor.clicking {
+      transform: translate(-50%, -50%) scale(0.65);
+    }
+
+    /* Default Spooky Theme Gradients */
+    .theme-spooky {
+      --primary-color: #ea580c;
+      --secondary-color: #dc2626;
+      --accent-color: #eab308;
+      --bg-gradient: radial-gradient(circle at 50% 20%, #1e092b 0%, #0a030f 50%, #020104 100%);
+      --card-border: rgba(234, 88, 12, 0.4);
+      --glow-shadow: 0 0 20px rgba(249, 115, 22, 0.4);
+    }
+
+    /* Stefan & Jaxon Modded Theme Gradients */
+    .theme-modded {
+      --primary-color: #06b6d4;
+      --secondary-color: #ec4899;
+      --accent-color: #a855f7;
+      --bg-gradient: radial-gradient(circle at 50% 20%, #0f172a 0%, #020617 60%, #000000 100%);
+      --card-border: rgba(6, 182, 212, 0.5);
+      --glow-shadow: 0 0 25px rgba(6, 182, 212, 0.6);
+    }
+
+    .spooky-bg {
+      background: var(--bg-gradient);
+    }
+
+    .glow-effect {
+      box-shadow: var(--glow-shadow);
+    }
+
+    /* Smooth CSS Animations */
+    .card-hover {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .card-hover:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: var(--glow-shadow);
+    }
+
+    /* Orbiting elements animation for Coming Soon */
+    @keyframes orbit1 {
+      0% { transform: rotate(0deg) translate(140px) rotate(0deg); }
+      100% { transform: rotate(360deg) translate(140px) rotate(-360deg); }
+    }
+    @keyframes orbit2 {
+      0% { transform: rotate(120deg) translate(200px) rotate(-120deg); }
+      100% { transform: rotate(480deg) translate(200px) rotate(-480deg); }
+    }
+    @keyframes orbit3 {
+      0% { transform: rotate(240deg) translate(260px) rotate(-240deg); }
+      100% { transform: rotate(600deg) translate(260px) rotate(-600deg); }
+    }
+
+    .orbiting-1 { animation: orbit1 16s linear infinite; }
+    .orbiting-2 { animation: orbit2 22s linear infinite; }
+    .orbiting-3 { animation: orbit3 28s linear infinite; }
+
+    /* Float Animation */
+    @keyframes floatAnimation {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-12px) rotate(4deg); }
+    }
+    .floating-icon {
+      animation: floatAnimation 4s ease-in-out infinite;
+    }
+
+    /* Coin gain splash floating text */
+    @keyframes floatUpFade {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-50px) scale(1.4); }
+    }
+    .coin-pop {
+      animation: floatUpFade 1.2s forwards ease-out;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #08030d; }
+    ::-webkit-scrollbar-thumb { background: #ea580c; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #f97316; }
+  </style>
+</head>
+<body class="theme-spooky spooky-bg min-h-screen flex flex-col justify-between overflow-hidden">
+
+  <!-- CUSTOM CANDY CORN CURSOR -->
+  <img id="custom-cursor" src="102987-32x32.png" alt="Candy Corn Cursor" onerror="this.src='https://img.icons8.com/emoji/48/candy-emoji.png'">
+
+  <!-- COIN ANIMATION NOTIFIER CONTAINER -->
+  <div id="coin-pop-container" class="fixed inset-0 pointer-events-none z-50 overflow-hidden"></div>
+
+  <!-- INTRO LOADING SCREEN OVERLAY -->
+  <div id="loading-screen" class="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center p-4 transition-all duration-700">
+    <div class="relative flex flex-col items-center max-w-2xl w-full text-center">
+      
+      <!-- INTRO LOGO -->
+      <div id="intro-logo-container" class="transition-all duration-1000 transform scale-100">
+        <img id="intro-logo" src="image_34127f.jpg" alt="STEFANJAXONGAMES" 
+             class="max-w-xs sm:max-w-md md:max-w-lg rounded-2xl border-4 border-orange-600/50 glow-effect mb-6 shadow-2xl object-cover"
+             onerror="this.onerror=null; this.src='https://placehold.co/600x300/1e0000/ff7700?text=STEFANJAXONGAMES';">
+      </div>
+
+      <!-- LOADING BAR CONTROLS -->
+      <div id="loader-controls" class="w-full max-w-md flex flex-col items-center gap-3">
+        <div class="w-full bg-gray-950 border border-orange-900/60 rounded-full h-6 p-1 relative overflow-hidden glow-effect">
+          <div id="progress-bar" class="bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 h-full rounded-full w-0 transition-all duration-200"></div>
+          <span id="progress-text" class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow">0%</span>
+        </div>
+        <p class="text-xs text-orange-400 font-mono tracking-widest uppercase animate-pulse">Summoning Spooky Games & Coins...</p>
+      </div>
+
+      <!-- CONTINUE BUTTON -->
+      <button id="continue-btn" onclick="enterSite()" class="hidden mt-4 px-8 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-extrabold text-xl rounded-full shadow-lg border-2 border-orange-400 glow-effect transform hover:scale-105 transition-all duration-300 animate-bounce">
+        <i class="fa-solid fa-ghost mr-2"></i> ENTER SITE <i class="fa-solid fa-skull ml-2"></i>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- MAIN APP CONTAINER -->
+  <div id="app-container" class="flex flex-col h-screen opacity-0 transition-opacity duration-700">
+    
+    <!-- TOP NAVBAR HEADER -->
+    <header class="h-20 bg-black/85 backdrop-blur-md border-b border-orange-900/40 px-6 flex items-center justify-between z-30 relative shadow-xl">
+      <div class="flex items-center gap-4">
+        <div id="header-logo-slot" class="w-36 h-12 flex items-center">
+          <img id="header-logo" src="image_34127f.jpg" alt="Logo" class="max-h-12 w-auto rounded border border-orange-600 shadow" onerror="this.onerror=null; this.src='https://placehold.co/200x80/1e0000/ff7700?text=STEFANJAXONGAMES';">
+        </div>
+        <h1 id="brand-title" class="text-xl sm:text-2xl font-black font-spooky text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-yellow-400 to-red-500 tracking-wider">
+          STEFANJAXONGAMES
+        </h1>
+        <span id="modded-badge" class="hidden px-2.5 py-0.5 rounded-full bg-cyan-950 border border-cyan-400 text-cyan-300 text-xs font-mono font-bold animate-pulse">MODDED EDITION</span>
+      </div>
+
+      <!-- TOP RIGHT STATUS & ADMIN CONTROLS -->
+      <div class="flex items-center gap-4">
+        <!-- COIN BALANCE DISPLAY -->
+        <!-- Coin Counter & Admin Button -->
+        <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-2 bg-neutral-900 border border-orange-500/30 px-3.5 py-1.5 rounded-full shadow-lg shadow-orange-950/20">
+                <span class="text-xl leading-none select-none">🎃</span>
+                <span class="text-xs uppercase font-bold tracking-wider text-neutral-400 hidden sm:inline">Coins:</span>
+                <span id="coin-count-display" class="font-extrabold text-orange-400 text-lg tracking-wide min-w-[20px] text-center">0</span>
+                <span class="ml-1 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-orange-500/20 text-orange-400 border border-orange-500/30">v1.00.00</span>
+            </div>
+
+            <button onclick="openAdminAuthModal()" class="flex items-center space-x-1.5 bg-gradient-to-r from-neutral-900 to-neutral-800 hover:from-orange-950 hover:to-neutral-900 text-orange-400 border border-orange-500/40 hover:border-orange-400 px-3 py-1.5 rounded-full text-xs font-bold transition-all transform active:scale-95 shadow-md">
+                <svg class="w-3.5 h-3.5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 2 0 002-2v-6a2 2 2 0 00-2-2H6a2 2 2 0 00-2 2v6a2 2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <span>ADMIN</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- CONTENT BODY WITH SIDEBAR TABS -->
+    <div class="flex flex-1 overflow-hidden relative">
+      
+      <!-- LEFT SIDEBAR -->
+      <aside class="w-64 bg-black/90 border-r border-orange-900/30 flex flex-col p-4 gap-3 z-20 shrink-0">
+        <div class="text-xs font-bold text-orange-500/70 uppercase tracking-widest px-3 mb-1">Navigation</div>
+        
+        <!-- TAB 1 -->
+        <button id="tab-btn-1" onclick="switchTab('simple-games')" class="tab-btn active flex items-center gap-3 px-4 py-3 rounded-xl bg-orange-600 text-white font-bold shadow-lg border border-orange-400/50 glow-effect transition-all duration-300 text-left">
+          <i class="fa-solid fa-gamepad text-lg text-yellow-300"></i>
+          <span>Simple Games</span>
+        </button>
+
+        <!-- TAB 2 -->
+        <button id="tab-btn-2" onclick="switchTab('unblocked-websites')" class="tab-btn flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-900/80 text-orange-400 font-bold border border-orange-900/40 transition-all duration-300 hover:bg-orange-950/40 text-left">
+          <i class="fa-solid fa-globe text-lg text-orange-500"></i>
+          <span>Unbl*ck3d W3bs1t3s</span>
+        </button>
+
+        <!-- TAB 3 -->
+        <button id="tab-btn-3" onclick="switchTab('coming-soon')" class="tab-btn flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-900/80 text-orange-400 font-bold border border-orange-900/40 transition-all duration-300 hover:bg-orange-950/40 text-left">
+          <i class="fa-solid fa-hourglass-half text-lg text-red-500"></i>
+          <span>Coming Soon</span>
+        </button>
+
+        <!-- SIDEBAR FOOTER -->
+        <div class="mt-auto p-4 bg-orange-950/20 rounded-xl border border-orange-900/30 text-center flex flex-col items-center gap-2">
+          <i class="fa-solid fa-spider text-3xl text-orange-500 floating-icon"></i>
+          <p class="text-xs text-orange-300/80 font-medium">Earn 🎃 Coins in Snake and Tic-Tac-Toe AI!</p>
+        </div>
+      </aside>
+
+      <!-- MAIN TAB CONTENT DISPLAY -->
+      <main class="flex-1 overflow-y-auto p-6 relative bg-gradient-to-b from-transparent to-black/70">
+
+        <!-- TAB 1: SIMPLE GAMES HUB -->
+        <section id="tab-simple-games" class="tab-content flex flex-col gap-6">
+          <div class="flex items-center justify-between border-b border-orange-900/40 pb-4">
+            <div>
+              <h2 class="text-3xl font-extrabold text-orange-400 flex items-center gap-3 font-spooky tracking-wide">
+                <i class="fa-solid fa-ghost"></i> Mini-Game Arcade & Store
+              </h2>
+              <p class="text-gray-400 text-sm">Earn 🎃 Coins playing Snake & Tic-Tac-Toe AI to unlock premium games!</p>
+            </div>
+          </div>
+
+          <!-- GAMES GRID LIST -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            
+            <!-- GAME 1: TIC TAC TOE (FREE & COIN REWARD) -->
+            <div class="game-card card-hover bg-gradient-to-b from-gray-900 to-black rounded-2xl border border-orange-900/40 p-4 flex flex-col justify-between relative overflow-hidden group">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold px-2.5 py-1 bg-green-950 text-green-400 border border-green-800 rounded-full">FREE</span>
+                <span class="text-xs font-bold text-amber-400 flex items-center gap-1"><i class="fa-solid fa-coins"></i> +5 Coins/Win</span>
+              </div>
+              <div class="py-6 flex flex-col items-center gap-2">
+                <i class="fa-solid fa-xmark text-5xl text-orange-500 group-hover:scale-110 transition"></i>
+                <h3 class="font-extrabold text-lg text-white mt-2">Tic-Tac-Toe AI</h3>
+                <p class="text-xs text-gray-400 text-center">Beat AI O to earn +5 🎃 Coins</p>
+              </div>
+              <button onclick="launchGame('tictactoe')" class="w-full py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-extrabold rounded-xl shadow border border-orange-400/50 flex items-center justify-center gap-2 glow-effect">
+                <i class="fa-solid fa-play"></i> PLAY NOW
+              </button>
+            </div>
+
+            <!-- GAME 2: SNAKE (FREE & COIN REWARDS) -->
+            <div class="game-card card-hover bg-gradient-to-b from-gray-900 to-black rounded-2xl border border-orange-900/40 p-4 flex flex-col justify-between relative overflow-hidden group">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold px-2.5 py-1 bg-green-950 text-green-400 border border-green-800 rounded-full">FREE</span>
+                <span class="text-xs font-bold text-amber-400 flex items-center gap-1"><i class="fa-solid fa-coins"></i> Earns Coins!</span>
+              </div>
+              <div class="py-6 flex flex-col items-center gap-2">
+                <i class="fa-solid fa-staff-snake text-5xl text-green-500 group-hover:scale-110 transition"></i>
+                <h3 class="font-extrabold text-lg text-white mt-2">Spooky Snake</h3>
+                <p class="text-xs text-gray-400 text-center">+1 coin/bite • +5 coins/1m • +50 coins/10m</p>
+              </div>
+              <button onclick="launchGame('snake')" class="w-full py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-extrabold rounded-xl shadow border border-orange-400/50 flex items-center justify-center gap-2 glow-effect">
+                <i class="fa-solid fa-play"></i> PLAY NOW
+              </button>
+            </div>
+
+            <!-- GAME 3: PONG (FREE) -->
+            <div class="game-card card-hover bg-gradient-to-b from-gray-900 to-black rounded-2xl border border-orange-900/40 p-4 flex flex-col justify-between relative overflow-hidden group">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold px-2.5 py-1 bg-green-950 text-green-400 border border-green-800 rounded-full">FREE</span>
+                <i class="fa-solid fa-table-tennis-paddle-ball text-yellow-500"></i>
+              </div>
+              <div class="py-6 flex flex-col items-center gap-2">
+                <i class="fa-solid fa-table-tennis-paddle-ball text-5xl text-yellow-500 group-hover:scale-110 transition"></i>
+                <h3 class="font-extrabold text-lg text-white mt-2">Pumpkin Pong</h3>
+                <p class="text-xs text-gray-400 text-center">Deflect the bouncing pumpkin ball</p>
+              </div>
+              <button onclick="launchGame('pong')" class="w-full py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-extrabold rounded-xl shadow border border-orange-400/50 flex items-center justify-center gap-2 glow-effect">
+                <i class="fa-solid fa-play"></i> PLAY NOW
+              </button>
+            </div>
+
+            <!-- GAME 4: PAC-MAN (LOCKED: 15 COINS) -->
+            <div id="card-pacman" class="game-card card-hover bg-gradient-to-b from-gray-900 to-black rounded-2xl border border-orange-900/40 p-4 flex flex-col justify-between relative overflow-hidden group">
+              <div class="flex items-center justify-between mb-3">
+                <span class="price-badge text-xs font-bold px-2.5 py-1 bg-amber-950 text-amber-400 border border-amber-800 rounded-full flex items-center gap-1">🎃 15 Coins</span>
+                <i class="fa-solid fa-ghost text-purple-400"></i>
+              </div>
+              <div class="py-6 flex flex-col items-center gap-2">
+                <i class="fa-solid fa-ghost text-5xl text-purple-400 group-hover:scale-110 transition"></i>
+                <h3 class="font-extrabold text-lg text-white mt-2">Pac-Man Ghost Chase</h3>
+                <p class="text-xs text-gray-400 text-center">Navigate spooky mazes avoiding ghosts</p>
+              </div>
+              <button id="btn-pacman" onclick="handleGameClick('pacman', 15)" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-extrabold rounded-xl shadow border border-amber-400/50 flex items-center justify-center gap-2 transition">
+                <i class="fa-solid fa-lock text-sm"></i> UNLOCK (15 COINS)
+              </button>
+            </div>
+
+            <!-- GAME 5: FLAPPY BAT (LOCKED: 20 COINS) -->
+            <div id="card-flappy" class="game-card card-hover bg-gradient-to-b from-gray-900 to-black rounded-2xl border border-orange-900/40 p-4 flex flex-col justify-between relative overflow-hidden group">
+              <div class="flex items-center justify-between mb-3">
+                <span class="price-badge text-xs font-bold px-2.5 py-1 bg-amber-950 text-amber-400 border border-amber-800 rounded-full flex items-center gap-1">🎃 20 Coins</span>
+                <i class="fa-solid fa-crow text-purple-500"></i>
+              </div>
+              <div class="py-6 flex flex-col items-center gap-2">
+                <i class="fa-solid fa-crow text-5xl text-purple-500 group-hover:scale-110 transition"></i>
+                <h3 class="font-extrabold text-lg text-white mt-2">Flappy Bat</h3>
+                <p class="text-xs text-gray-400 text-center">Fly through spooky pumpkin obstacles</p>
+              </div>
+              <button id="btn-flappy" onclick="handleGameClick('flappy', 20)" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-extrabold rounded-xl shadow border border-amber-400/50 flex items-center justify-center gap-2 transition">
+                <i class="fa-solid fa-lock text-sm"></i> UNLOCK (20 COINS)
+              </button>
+            </div>
+
+            <!-- GAME 6: SPOOKY CLICKER (LOCKED: 30 COINS) -->
+            <div id="card-clicker" class="game-card card-hover bg-gradient-to-b from-gray-900 to-black rounded-2xl border border-orange-900/40 p-4 flex flex-col justify-between relative overflow-hidden group">
+              <div class="flex items-center justify-between mb-3">
+                <span class="price-badge text-xs font-bold px-2.5 py-1 bg-amber-950 text-amber-400 border border-amber-800 rounded-full flex items-center gap-1">🎃 30 Coins</span>
+                <i class="fa-solid fa-hand-pointer text-orange-400"></i>
+              </div>
+              <div class="py-6 flex flex-col items-center gap-2">
+                <i class="fa-solid fa-hand-pointer text-5xl text-orange-400 group-hover:scale-110 transition"></i>
+                <h3 class="font-extrabold text-lg text-white mt-2">Spooky Candy Clicker</h3>
+                <p class="text-xs text-gray-400 text-center">Click candies to generate huge candy scores</p>
+              </div>
+              <button id="btn-clicker" onclick="handleGameClick('clicker', 30)" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-extrabold rounded-xl shadow border border-amber-400/50 flex items-center justify-center gap-2 transition">
+                <i class="fa-solid fa-lock text-sm"></i> UNLOCK (30 COINS)
+              </button>
+            </div>
+
+            <!-- GAME 7: MEMORY MATCH (LOCKED: 40 COINS) -->
+            <div id="card-memory" class="game-card card-hover bg-gradient-to-b from-gray-900 to-black rounded-2xl border border-orange-900/40 p-4 flex flex-col justify-between relative overflow-hidden group">
+              <div class="flex items-center justify-between mb-3">
+                <span class="price-badge text-xs font-bold px-2.5 py-1 bg-amber-950 text-amber-400 border border-amber-800 rounded-full flex items-center gap-1">🎃 40 Coins</span>
+                <i class="fa-solid fa-brain text-pink-500"></i>
+              </div>
+              <div class="py-6 flex flex-col items-center gap-2">
+                <i class="fa-solid fa-brain text-5xl text-pink-500 group-hover:scale-110 transition"></i>
+                <h3 class="font-extrabold text-lg text-white mt-2">Halloween Memory</h3>
+                <p class="text-xs text-gray-400 text-center">Match horror cards under timer pressure</p>
+              </div>
+              <button id="btn-memory" onclick="handleGameClick('memory', 40)" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-extrabold rounded-xl shadow border border-amber-400/50 flex items-center justify-center gap-2 transition">
+                <i class="fa-solid fa-lock text-sm"></i> UNLOCK (40 COINS)
+              </button>
+            </div>
+
+            <!-- GAME 8: BRICK BREAKER (LOCKED: 50 COINS) -->
+            <div id="card-bricks" class="game-card card-hover bg-gradient-to-b from-gray-900 to-black rounded-2xl border border-orange-900/40 p-4 flex flex-col justify-between relative overflow-hidden group">
+              <div class="flex items-center justify-between mb-3">
+                <span class="price-badge text-xs font-bold px-2.5 py-1 bg-amber-950 text-amber-400 border border-amber-800 rounded-full flex items-center gap-1">🎃 50 Coins</span>
+                <i class="fa-solid fa-cubes text-cyan-400"></i>
+              </div>
+              <div class="py-6 flex flex-col items-center gap-2">
+                <i class="fa-solid fa-cubes text-5xl text-cyan-400 group-hover:scale-110 transition"></i>
+                <h3 class="font-extrabold text-lg text-white mt-2">Graveyard Bricks</h3>
+                <p class="text-xs text-gray-400 text-center">Smash spooky tombstones with bouncing skulls</p>
+              </div>
+              <button id="btn-bricks" onclick="handleGameClick('bricks', 50)" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-extrabold rounded-xl shadow border border-amber-400/50 flex items-center justify-center gap-2 transition">
+                <i class="fa-solid fa-lock text-sm"></i> UNLOCK (50 COINS)
+              </button>
+            </div>
+
+          </div>
+
+          <!-- ACTIVE PLAY VIEW (POPS UP WHEN OVERLAY PLAY IS CLICKED) -->
+          <div id="active-game-view" class="hidden fixed inset-0 z-40 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4">
+            <div class="w-full max-w-2xl bg-gray-950 rounded-2xl border-2 border-orange-600/50 p-6 flex flex-col items-center shadow-2xl relative glow-effect">
+              
+              <!-- CLOSE GAME VIEW BUTTON -->
+              <button onclick="closeGameView()" class="absolute top-4 right-4 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-xs flex items-center gap-1">
+                <i class="fa-solid fa-xmark"></i> Close Game
+              </button>
+
+              <h3 id="active-game-title" class="text-2xl font-extrabold text-orange-400 mb-2 font-spooky">Game View</h3>
+              
+              <!-- PLAYTIME & REWARD HUD DISPLAYS -->
+              <div id="game-hud" class="w-full flex items-center justify-between text-xs font-mono font-bold text-amber-400 mb-2 px-2 hidden">
+                <span id="snake-timer-hud">⏱️ Playtime: 0m 0s</span>
+                <span id="snake-reward-status">🎃 Rewards Active</span>
+              </div>
+
+              <div id="canvas-container" class="relative flex flex-col items-center justify-center w-full">
+                <canvas id="active-canvas" width="440" height="400" class="bg-black border border-orange-900/60 rounded-xl max-w-full shadow-inner"></canvas>
+              </div>
+
+              <div id="game-status-msg" class="mt-3 text-sm font-bold text-amber-400 min-h-[24px]"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 2: UNBL*CK3D W3BS1T3S -->
+        <section id="tab-unblocked-websites" class="tab-content hidden flex flex-col gap-6">
+          <div class="border-b border-orange-900/40 pb-4">
+            <h2 class="text-3xl font-extrabold text-orange-400 flex items-center gap-3 font-spooky tracking-wide">
+              <i class="fa-solid fa-skull-crossbones"></i> Unbl*ck3d W3bs1t3s Hub
+            </h2>
+            <p class="text-gray-400 text-sm">Launch external unblocked proxy portals inside full screen view.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <div class="card-hover bg-gradient-to-br from-gray-900 to-black p-6 rounded-2xl border border-orange-900/40 glow-effect flex flex-col justify-between gap-4">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-mono px-2 py-1 rounded bg-orange-950 text-orange-400 border border-orange-800">PORTAL 01</span>
+                  <i class="fa-solid fa-bolt text-yellow-500"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-1">UBG Hyper</h3>
+                <p class="text-xs text-gray-400 font-mono">ubghyper.github.io</p>
+              </div>
+              <button onclick="openWebsiteModal('https://ubghyper.github.io/', 'UBG Hyper')" class="w-full py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow">
+                <i class="fa-solid fa-up-right-from-square"></i> Launch Portal
+              </button>
+            </div>
+
+            <div class="card-hover bg-gradient-to-br from-gray-900 to-black p-6 rounded-2xl border border-orange-900/40 glow-effect flex flex-col justify-between gap-4">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-mono px-2 py-1 rounded bg-orange-950 text-orange-400 border border-orange-800">PORTAL 02</span>
+                  <i class="fa-solid fa-gamepad text-orange-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-1">Jax Games 47</h3>
+                <p class="text-xs text-gray-400 font-mono">jaxgames47.github.io</p>
+              </div>
+              <button onclick="openWebsiteModal('https://jaxgames47.github.io/', 'Jax Games 47')" class="w-full py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow">
+                <i class="fa-solid fa-up-right-from-square"></i> Launch Portal
+              </button>
+            </div>
+
+            <div class="card-hover bg-gradient-to-br from-gray-900 to-black p-6 rounded-2xl border border-orange-900/40 glow-effect flex flex-col justify-between gap-4">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-mono px-2 py-1 rounded bg-orange-950 text-orange-400 border border-orange-800">PORTAL 03</span>
+                  <i class="fa-solid fa-fire text-red-500"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-1">Unblocked Games</h3>
+                <p class="text-xs text-gray-400 font-mono">unblokedgames.github.io</p>
+              </div>
+              <button onclick="openWebsiteModal('https://unblokedgames.github.io/', 'Unblocked Games Hub')" class="w-full py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow">
+                <i class="fa-solid fa-up-right-from-square"></i> Launch Portal
+              </button>
+            </div>
+
+            <div class="card-hover bg-gradient-to-br from-gray-900 to-black p-6 rounded-2xl border border-orange-900/40 glow-effect flex flex-col justify-between gap-4">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-mono px-2 py-1 rounded bg-orange-950 text-orange-400 border border-orange-800">PORTAL 04</span>
+                  <i class="fa-solid fa-hat-wizard text-purple-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-1">SZ Games</h3>
+                <p class="text-xs text-gray-400 font-mono">sz-games.github.io</p>
+              </div>
+              <button onclick="openWebsiteModal('https://sz-games.github.io/', 'SZ Games')" class="w-full py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow">
+                <i class="fa-solid fa-up-right-from-square"></i> Launch Portal
+              </button>
+            </div>
+
+            <div class="card-hover bg-gradient-to-br from-gray-900 to-black p-6 rounded-2xl border border-orange-900/40 glow-effect flex flex-col justify-between gap-4">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-mono px-2 py-1 rounded bg-orange-950 text-orange-400 border border-orange-800">PORTAL 05</span>
+                  <i class="fa-solid fa-rocket text-yellow-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-1">Unblocked 2026</h3>
+                <p class="text-xs text-gray-400 font-mono">unblocked-2026.github.io</p>
+              </div>
+              <button onclick="openWebsiteModal('https://unblocked-2026.github.io/', 'Unblocked 2026')" class="w-full py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow">
+                <i class="fa-solid fa-up-right-from-square"></i> Launch Portal
+              </button>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- TAB 3: COMING SOON -->
+        <section id="tab-coming-soon" class="tab-content hidden h-full flex items-center justify-center min-h-[500px]">
+          <div class="relative flex items-center justify-center w-full max-w-2xl h-[450px]">
+            
+            <div class="z-10 text-center">
+              <h2 class="text-6xl sm:text-7xl font-black font-spooky text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-yellow-400 to-red-600 glow-effect tracking-widest animate-pulse">
+                COMING SOON!
+              </h2>
+              <p class="text-orange-300 text-sm mt-3 font-mono tracking-wider">NEW SPOOKY TITLES ORBITING NEARBY</p>
+            </div>
+
+            <!-- Orbiting Faint Popular Game Titles -->
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div class="orbiting-1 absolute font-bold text-orange-500/40 text-base">Minecraft</div>
+              <div class="orbiting-1 absolute font-bold text-orange-400/30 text-base" style="animation-delay: -5s;">Roblox</div>
+              <div class="orbiting-1 absolute font-bold text-red-500/40 text-base" style="animation-delay: -10s;">FNAF</div>
+            </div>
+
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div class="orbiting-2 absolute font-bold text-yellow-500/30 text-sm">Geometry Dash</div>
+              <div class="orbiting-2 absolute font-bold text-orange-300/30 text-sm" style="animation-delay: -7s;">Subway Surfers</div>
+              <div class="orbiting-2 absolute font-bold text-red-400/30 text-sm" style="animation-delay: -14s;">Retro Bowl</div>
+            </div>
+
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div class="orbiting-3 absolute font-bold text-purple-400/30 text-sm">BitLife</div>
+              <div class="orbiting-3 absolute font-bold text-cyan-400/30 text-sm" style="animation-delay: -9s;">Slope 3D</div>
+              <div class="orbiting-3 absolute font-bold text-yellow-400/30 text-sm" style="animation-delay: -18s;">1v1.LOL</div>
+            </div>
+
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- WEBSITE MODAL OVERLAY -->
+  <div id="website-modal" class="fixed inset-0 bg-black/95 z-50 hidden flex-col">
+    <div class="h-14 bg-black border-b border-orange-900/60 px-4 flex items-center justify-between shrink-0">
+      
+      <!-- RED EXIT DOOR BUTTON -->
+      <div class="flex items-center gap-3">
+        <button onclick="closeWebsiteModal()" title="Exit Portal" class="flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg glow-effect transition transform hover:scale-105">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
+            <path d="M13 3v18l-8-4V7l8-4z" fill="#ffffff"/>
+          </svg>
+          <span class="text-xs uppercase tracking-wider">Exit</span>
+        </button>
+        <span id="modal-title" class="font-bold text-orange-400 text-sm hidden sm:inline">Website Portal</span>
+      </div>
+
+      <button onclick="toggleNativeFullscreen()" class="flex items-center gap-2 px-4 py-1.5 bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold rounded-lg glow-effect transition">
+        <i class="fa-solid fa-expand"></i> Full Screen
+      </button>
+    </div>
+
+    <div class="flex-1 w-full h-full bg-black relative">
+      <iframe id="modal-iframe" src="" class="w-full h-full border-0" allowfullscreen></iframe>
+    </div>
+  </div>
+
+  <!-- PASSCODE MODAL DIALOG -->
+  <div id="passcode-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-gray-950 border-2 border-orange-600/70 rounded-2xl w-full max-w-md p-6 shadow-2xl relative glow-effect flex flex-col gap-4 text-center">
+      
+      <div class="flex items-center justify-between border-b border-orange-900/50 pb-3">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-user-ninja text-2xl text-yellow-400 animate-bounce"></i>
+          <h3 class="text-xl font-extrabold text-orange-400 font-mono tracking-wider">ADMIN ACCESS CODE</h3>
+        </div>
+        <button onclick="closePasscodeModal()" class="text-gray-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <p class="text-xs text-orange-300/80 font-mono">Enter the secret code to unlock the Admin Suite:</p>
+
+      <div class="flex flex-col gap-3">
+        <input id="secret-passcode-input" type="password" placeholder="Type passcode here..." class="w-full bg-black border border-orange-600/70 rounded-xl px-4 py-2.5 text-center text-sm text-white focus:outline-none focus:border-yellow-400 font-mono tracking-widest">
+        <p id="passcode-error" class="text-xs text-red-500 font-bold hidden">❌ Incorrect passcode! Try again.</p>
+        <button onclick="verifyPasscode()" class="w-full py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-extrabold text-sm rounded-xl shadow border border-orange-400/50 glow-effect transition transform active:scale-95">
+          UNLOCK ADMIN SUITE
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECRET ADMIN PANEL MODAL -->
+  <div id="admin-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-gray-950 border-2 border-purple-500 rounded-2xl w-full max-w-xl p-6 shadow-2xl relative glow-effect flex flex-col gap-5">
+      
+      <div class="flex items-center justify-between border-b border-purple-900/50 pb-3">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-user-ninja text-2xl text-yellow-400 animate-bounce"></i>
+          <h3 class="text-xl font-extrabold text-purple-300 font-mono tracking-wider">SECRET ADMIN SUITE</h3>
+        </div>
+        <button onclick="closeAdminModal()" class="text-gray-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- ADMIN FEATURES LIST -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        
+        <!-- COIN GENERATOR -->
+        <div class="bg-gray-900/90 border border-purple-900/50 p-4 rounded-xl flex flex-col gap-2">
+          <label class="text-xs font-bold text-amber-400 uppercase tracking-widest"><i class="fa-solid fa-coins"></i> Coin Injector</label>
+          <div class="flex gap-2">
+            <input id="admin-coin-input" type="number" placeholder="Enter amount" class="w-full bg-black border border-purple-700/60 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-purple-400 font-mono">
+            <button onclick="adminAddCoins()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-lg transition">Add</button>
+          </div>
+          <button onclick="adminAddCoins(1000)" class="w-full py-1.5 bg-amber-950/80 hover:bg-amber-900 text-amber-300 text-xs font-bold border border-amber-800 rounded-lg transition">+1,000 Coins Instant</button>
+        </div>
+
+        <!-- UNLOCK ALL GAMES -->
+        <div class="bg-gray-900/90 border border-purple-900/50 p-4 rounded-xl flex flex-col justify-between gap-2">
+          <label class="text-xs font-bold text-green-400 uppercase tracking-widest"><i class="fa-solid fa-unlock-keyhole"></i> Unlock All Games</label>
+          <p class="text-[11px] text-gray-400">Instantly grant free access to all locked games.</p>
+          <button onclick="adminUnlockAllGames()" class="w-full py-2 bg-green-600 hover:bg-green-500 text-white text-xs font-extrabold rounded-lg transition shadow">
+            UNLOCK ALL GAMES
+          </button>
+        </div>
+
+        <!-- MODDED THEME TOGGLE -->
+        <div class="bg-gray-900/90 border border-purple-900/50 p-4 rounded-xl flex flex-col justify-between gap-2 sm:col-span-2">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold text-cyan-400 uppercase tracking-widest"><i class="fa-solid fa-wand-magic-sparkles"></i> Stefan & Jaxon Modded Mode</label>
+            <span id="modded-status" class="text-xs text-gray-400 font-mono">Status: Disabled</span>
+          </div>
+          <button onclick="toggleModdedTheme()" class="w-full py-2 bg-gradient-to-r from-cyan-600 via-purple-600 to-pink-600 hover:opacity-90 text-white text-xs font-extrabold rounded-lg transition shadow">
+            TOGGLE MODDED THEME & VISUALS
+          </button>
+        </div>
+
+        <!-- SECRET YOUTUBE UNBLOCKED PLAYER -->
+        <div class="bg-gray-900/90 border border-purple-900/50 p-4 rounded-xl flex flex-col gap-2 sm:col-span-2">
+          <label class="text-xs font-bold text-red-500 uppercase tracking-widest"><i class="fa-brands fa-youtube"></i> Secret YouTube Player</label>
+          <div class="flex gap-2">
+            <input id="youtube-url-input" type="text" placeholder="Paste YouTube link or Video ID (e.g. dQw4w9WgXcQ)" class="w-full bg-black border border-purple-700/60 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-red-500 font-mono">
+            <button onclick="adminPlayYouTube()" class="px-4 py-1.5 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg transition flex items-center gap-1">
+              <i class="fa-solid fa-play"></i> Watch
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APP LOGIC -->
+  <script>
+    // --- STATE MANAGEMENT ---
+    let coinBalance = parseInt(localStorage.getItem('sjg_coins') || '0');
+    let unlockedGames = JSON.parse(localStorage.getItem('sjg_unlocked') || '[]');
+    let isModdedTheme = false;
+
+    // --- CURSOR INTERACTION ---
+    const cursor = document.getElementById('custom-cursor');
+    document.addEventListener('mousemove', (e) => {
+      cursor.style.left = `${e.clientX}px`;
+      cursor.style.top = `${e.clientY}px`;
+    });
+    document.addEventListener('mousedown', () => cursor.classList.add('clicking'));
+    document.addEventListener('mouseup', () => cursor.classList.remove('clicking'));
+
+    // --- INITIALIZATION ---
+    window.addEventListener('load', () => {
+      updateCoinDisplay();
+      updateUnlockedCards();
+      simulateLoading();
+
+      // Enter key listener for passcode modal
+      document.getElementById('secret-passcode-input').addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') verifyPasscode();
+      });
+    });
+
+    function updateCoinDisplay() {
+      const el = document.getElementById('coin-count-display') || document.getElementById('coin-count');
+      if (el) el.textContent = coinBalance;
+      localStorage.setItem('sjg_coins', coinBalance.toString());
+    }
+
+    function addCoins(amount) {
+      coinBalance += amount;
+      updateCoinDisplay();
+      spawnCoinPop(`+${amount} 🎃`);
+    }
+
+    function spawnCoinPop(text) {
+      const container = document.getElementById('coin-pop-container');
+      if (!container) return;
+      const pop = document.createElement('div');
+      pop.className = 'coin-pop absolute font-extrabold text-amber-400 text-xl tracking-wider text-shadow';
+      pop.style.left = `${Math.random() * 60 + 20}%`;
+      pop.style.top = `${Math.random() * 40 + 30}%`;
+      pop.textContent = text;
+      container.appendChild(pop);
+      setTimeout(() => pop.remove(), 1200);
+    }
+
+    // --- LOADING & INTRO TRANSITION ---
+    function simulateLoading() {
+      const progressBar = document.getElementById('progress-bar');
+      const progressText = document.getElementById('progress-text');
+      const continueBtn = document.getElementById('continue-btn');
+      const loaderControls = document.getElementById('loader-controls');
+
+      let currentProgress = 0;
+      const totalTime = 7000;
+      const startTime = Date.now();
+
+      function step() {
+        const elapsed = Date.now() - startTime;
+        const ratio = Math.min(1, elapsed / totalTime);
+
+        // Randomized step intervals for realistic loading feel
+        const randomFluctuation = (Math.random() - 0.4) * 8;
+        currentProgress = Math.min(100, Math.floor(ratio * 100 + randomFluctuation));
+        if (ratio >= 1) currentProgress = 100;
+
+        progressBar.style.width = `${currentProgress}%`;
+        progressText.textContent = `${currentProgress}%`;
+
+        if (currentProgress < 100) {
+          setTimeout(step, Math.random() * 250 + 100);
+        } else {
+          progressBar.style.width = '100%';
+          progressText.textContent = '100%';
+          if (loaderControls) loaderControls.classList.add('hidden');
+          if (continueBtn) continueBtn.classList.remove('hidden');
+        }
+      }
+
+      step();
+    }
+
+    function enterSite() {
+      const loadingScreen = document.getElementById('loading-screen');
+      const appContainer = document.getElementById('app-container');
+
+      if (loadingScreen) {
+        loadingScreen.style.opacity = '0';
+        setTimeout(() => {
+          loadingScreen.classList.add('hidden');
+        }, 700);
+      }
+
+      if (appContainer) {
+        appContainer.classList.remove('opacity-0');
+      }
+    }
+
+    // --- NAVIGATION TABS ---
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(el => {
+        el.classList.remove('active', 'bg-orange-600', 'text-white', 'border-orange-400/50', 'glow-effect');
+        el.classList.add('bg-gray-900/80', 'text-orange-400', 'border-orange-900/40');
+      });
+
+      const activeTab = document.getElementById(`tab-${tabId}`);
+      if (activeTab) activeTab.classList.remove('hidden');
+
+      const btnIndexMap = {
+        'simple-games': 'tab-btn-1',
+        'unblocked-websites': 'tab-btn-2',
+        'coming-soon': 'tab-btn-3'
+      };
+
+      const activeBtn = document.getElementById(btnIndexMap[tabId]);
+      if (activeBtn) {
+        activeBtn.classList.remove('bg-gray-900/80', 'text-orange-400', 'border-orange-900/40');
+        activeBtn.classList.add('active', 'bg-orange-600', 'text-white', 'border-orange-400/50', 'glow-effect');
+      }
+    }
+
+    // --- GAME STORE & LOCK UNLOCK SYSTEM ---
+    function updateUnlockedCards() {
+      unlockedGames.forEach(gameKey => {
+        const btn = document.getElementById(`btn-${gameKey}`);
+        const card = document.getElementById(`card-${gameKey}`);
+        if (btn) {
+          btn.className = 'w-full py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-extrabold rounded-xl shadow border border-orange-400/50 flex items-center justify-center gap-2 glow-effect';
+          btn.innerHTML = `<i class="fa-solid fa-play"></i> PLAY NOW`;
+          btn.onclick = () => launchGame(gameKey);
+        }
+        if (card) {
+          const badge = card.querySelector('.price-badge');
+          if (badge) {
+            badge.className = 'text-xs font-bold px-2.5 py-1 bg-green-950 text-green-400 border border-green-800 rounded-full';
+            badge.textContent = 'UNLOCKED';
+          }
+        }
+      });
+    }
+
+    function handleGameClick(gameKey, cost) {
+      if (unlockedGames.includes(gameKey)) {
+        launchGame(gameKey);
+        return;
+      }
+
+      if (coinBalance >= cost) {
+        coinBalance -= cost;
+        unlockedGames.push(gameKey);
+        localStorage.setItem('sjg_unlocked', JSON.stringify(unlockedGames));
+        updateCoinDisplay();
+        updateUnlockedCards();
+        spawnCoinPop(`-${cost} 🎃`);
+        launchGame(gameKey);
+      } else {
+        alert(`You need ${cost} 🎃 Coins to unlock this game! Play Snake or Tic-Tac-Toe to earn more!`);
+      }
+    }
+
+    // --- GAME RUNTIME ENGINE ---
+    let currentGameLoop = null;
+    let snakeTimerInterval = null;
+    let snakeSecondsPlayed = 0;
+    let awarded1Min = false;
+    let awarded10Min = false;
+
+    function closeGameView() {
+      const view = document.getElementById('active-game-view');
+      const hud = document.getElementById('game-hud');
+      if (view) view.classList.add('hidden');
+      if (hud) hud.classList.add('hidden');
+
+      if (currentGameLoop) {
+        clearInterval(currentGameLoop);
+        cancelAnimationFrame(currentGameLoop);
+        currentGameLoop = null;
+      }
+      if (snakeTimerInterval) {
+        clearInterval(snakeTimerInterval);
+        snakeTimerInterval = null;
+      }
+    }
+
+    function launchGame(gameKey) {
+      const view = document.getElementById('active-game-view');
+      const title = document.getElementById('active-game-title');
+      const statusMsg = document.getElementById('game-status-msg');
+      const hud = document.getElementById('game-hud');
+
+      closeGameView();
+      if (view) view.classList.remove('hidden');
+      if (statusMsg) statusMsg.textContent = '';
+
+      const canvas = document.getElementById('active-canvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (gameKey === 'tictactoe') {
+        title.textContent = 'Tic-Tac-Toe AI (Win = +5 🎃)';
+        initTicTacToe(canvas, ctx, statusMsg);
+      } else if (gameKey === 'snake') {
+        title.textContent = 'Spooky Snake (Earns 🎃 Coins)';
+        if (hud) hud.classList.remove('hidden');
+        initSnake(canvas, ctx, statusMsg);
+      } else if (gameKey === 'pong') {
+        title.textContent = 'Pumpkin Pong';
+        initPong(canvas, ctx, statusMsg);
+      } else if (gameKey === 'pacman') {
+        title.textContent = 'Pac-Man Ghost Chase';
+        initPacman(canvas, ctx, statusMsg);
+      } else if (gameKey === 'flappy') {
+        title.textContent = 'Flappy Bat';
+        initFlappy(canvas, ctx, statusMsg);
+      } else if (gameKey === 'clicker') {
+        title.textContent = 'Spooky Candy Clicker';
+        initClicker(canvas, ctx, statusMsg);
+      } else if (gameKey === 'memory') {
+        title.textContent = 'Halloween Memory Match';
+        initMemory(canvas, ctx, statusMsg);
+      } else if (gameKey === 'bricks') {
+        title.textContent = 'Graveyard Bricks';
+        initBricks(canvas, ctx, statusMsg);
+      }
+    }
+
+    // 1. TIC-TAC-TOE VS AI
+    function initTicTacToe(canvas, ctx, statusMsg) {
+      let board = ['', '', '', '', '', '', '', '', ''];
+      let gameOver = false;
+
+      function drawBoard() {
+        ctx.fillStyle = '#050505';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = '#ea580c';
+        ctx.lineWidth = 4;
+        const w = canvas.width / 3;
+        const h = canvas.height / 3;
+
+        for (let i = 1; i < 3; i++) {
+          ctx.beginPath();
+          ctx.moveTo(i * w, 0); ctx.lineTo(i * w, canvas.height);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(0, i * h); ctx.lineTo(canvas.width, i * h);
+          ctx.stroke();
+        }
+
+        ctx.font = 'bold 50px Outfit';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        board.forEach((cell, idx) => {
+          const x = (idx % 3) * w + w / 2;
+          const y = Math.floor(idx / 3) * h + h / 2;
+          if (cell === 'X') {
+            ctx.fillStyle = '#f97316';
+            ctx.fillText('❌', x, y);
+          } else if (cell === 'O') {
+            ctx.fillStyle = '#eab308';
+            ctx.fillText('🎃', x, y);
+          }
+        });
+      }
+
+      function checkWinner(b) {
+        const lines = [
+          [0,1,2],[3,4,5],[6,7,8],
+          [0,3,6],[1,4,7],[2,5,8],
+          [0,4,8],[2,4,6]
+        ];
+        for (let l of lines) {
+          if (b[l[0]] && b[l[0]] === b[l[1]] && b[l[0]] === b[l[2]]) return b[l[0]];
+        }
+        return b.includes('') ? null : 'TIE';
+      }
+
+      function aiMove() {
+        if (gameOver) return;
+        let emptyIndices = board.map((v, i) => v === '' ? i : null).filter(v => v !== null);
+        if (emptyIndices.length > 0) {
+          let choice = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+          board[choice] = 'O';
+          drawBoard();
+          let res = checkWinner(board);
+          if (res) handleEnd(res);
+        }
+      }
+
+      function handleEnd(res) {
+        gameOver = true;
+        if (res === 'X') {
+          statusMsg.textContent = '🎉 YOU WIN! +5 🎃 Coins added!';
+          addCoins(5);
+        } else if (res === 'O') {
+          statusMsg.textContent = '💀 AI Won! Try again!';
+        } else {
+          statusMsg.textContent = '🤝 It\'s a Tie!';
+        }
+      }
+
+      function onClick(e) {
+        if (gameOver) {
+          board = ['', '', '', '', '', '', '', '', ''];
+          gameOver = false;
+          statusMsg.textContent = '';
+          drawBoard();
+          return;
+        }
+
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const col = Math.floor(x / (canvas.width / 3));
+        const row = Math.floor(y / (canvas.height / 3));
+        const idx = row * 3 + col;
+
+        if (board[idx] === '') {
+          board[idx] = 'X';
+          drawBoard();
+          let res = checkWinner(board);
+          if (res) {
+            handleEnd(res);
+          } else {
+            setTimeout(aiMove, 300);
+          }
+        }
+      }
+
+      canvas.onclick = onClick;
+      drawBoard();
+    }
+
+    // 2. SPOOKY SNAKE GAME (WITH PLAYTIME & BITE COIN REWARDS)
+    function initSnake(canvas, ctx, statusMsg) {
+      const gridSize = 20;
+      const tileCount = canvas.width / gridSize;
+      let snake = [{x: 10, y: 10}];
+      let food = {x: 15, y: 15};
+      let dx = 1, dy = 0;
+      let score = 0;
+
+      snakeSecondsPlayed = 0;
+      awarded1Min = false;
+      awarded10Min = false;
+
+      const timerHud = document.getElementById('snake-timer-hud');
+      if (timerHud) timerHud.textContent = `⏱️ Playtime: 0m 0s`;
+
+      snakeTimerInterval = setInterval(() => {
+        snakeSecondsPlayed++;
+        const mins = Math.floor(snakeSecondsPlayed / 60);
+        const secs = snakeSecondsPlayed % 60;
+        if (timerHud) timerHud.textContent = `⏱️ Playtime: ${mins}m ${secs}s`;
+
+        if (snakeSecondsPlayed >= 60 && !awarded1Min) {
+          awarded1Min = true;
+          addCoins(5);
+          statusMsg.textContent = '🎉 1 Minute Bonus! +5 🎃 Coins!';
+        }
+        if (snakeSecondsPlayed >= 600 && !awarded10Min) {
+          awarded10Min = true;
+          addCoins(50);
+          statusMsg.textContent = '🏆 10 Minute Master Survival! +50 🎃 Coins!';
+        }
+      }, 1000);
+
+      function keyHandler(e) {
+        if (e.key === 'ArrowUp' && dy === 0) { dx = 0; dy = -1; }
+        else if (e.key === 'ArrowDown' && dy === 0) { dx = 0; dy = 1; }
+        else if (e.key === 'ArrowLeft' && dx === 0) { dx = -1; dy = 0; }
+        else if (e.key === 'ArrowRight' && dx === 0) { dx = 1; dy = 0; }
+      }
+      document.onkeydown = keyHandler;
+
+      function draw() {
+        const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+
+        if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+          statusMsg.textContent = `💀 Game Over! Score: ${score}`;
+          closeGameView();
+          return;
+        }
+
+        for (let segment of snake) {
+          if (segment.x === head.x && segment.y === head.y) {
+            statusMsg.textContent = `💀 Game Over! Score: ${score}`;
+            closeGameView();
+            return;
+          }
+        }
+
+        snake.unshift(head);
+
+        if (head.x === food.x && head.y === food.y) {
+          score++;
+          addCoins(1); // +1 Coin per bite
+          food = {
+            x: Math.floor(Math.random() * tileCount),
+            y: Math.floor(Math.random() * tileCount)
+          };
+        } else {
+          snake.pop();
+        }
+
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw food
+        ctx.font = '16px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🎃', food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2);
+
+        // Draw snake
+        snake.forEach((seg, i) => {
+          ctx.fillStyle = i === 0 ? '#22c55e' : '#15803d';
+          ctx.fillRect(seg.x * gridSize, seg.y * gridSize, gridSize - 2, gridSize - 2);
+        });
+      }
+
+      currentGameLoop = setInterval(draw, 100);
+    }
+
+    // 3. PUMPKIN PONG
+    function initPong(canvas, ctx, statusMsg) {
+      let ballX = canvas.width / 2, ballY = canvas.height / 2;
+      let ballDx = 4, ballDy = 4;
+      let playerY = canvas.height / 2 - 40;
+      let aiY = canvas.height / 2 - 40;
+      const paddleH = 80, paddleW = 10;
+
+      canvas.onmousemove = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        playerY = e.clientY - rect.top - paddleH / 2;
+      };
+
+      function draw() {
+        ballX += ballDx;
+        ballY += ballDy;
+
+        if (ballY <= 0 || ballY >= canvas.height) ballDy = -ballDy;
+
+        // AI movement
+        if (ballY > aiY + paddleH / 2) aiY += 3;
+        else aiY -= 3;
+
+        // Player Collision
+        if (ballX <= paddleW && ballY >= playerY && ballY <= playerY + paddleH) ballDx = -ballDx;
+
+        // AI Collision
+        if (ballX >= canvas.width - paddleW && ballY >= aiY && ballY <= aiY + paddleH) ballDx = -ballDx;
+
+        // Reset Ball
+        if (ballX < 0 || ballX > canvas.width) {
+          ballX = canvas.width / 2;
+          ballY = canvas.height / 2;
+        }
+
+        ctx.fillStyle = '#050505';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#ea580c';
+        ctx.fillRect(0, playerY, paddleW, paddleH);
+        ctx.fillRect(canvas.width - paddleW, aiY, paddleW, paddleH);
+
+        ctx.font = '20px serif';
+        ctx.fillText('🎃', ballX - 10, ballY + 5);
+
+        currentGameLoop = requestAnimationFrame(draw);
+      }
+      draw();
+    }
+
+    // 4. PAC-MAN MAZE CHASE
+    function initPacman(canvas, ctx, statusMsg) {
+      let px = 200, py = 200;
+      let gx = 50, gy = 50;
+
+      document.onkeydown = (e) => {
+        if (e.key === 'ArrowUp') py -= 15;
+        if (e.key === 'ArrowDown') py += 15;
+        if (e.key === 'ArrowLeft') px -= 15;
+        if (e.key === 'ArrowRight') px += 15;
+      };
+
+      function loop() {
+        if (gx < px) gx += 1.5; else gx -= 1.5;
+        if (gy < py) gy += 1.5; else gy -= 1.5;
+
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.font = '24px serif';
+        ctx.fillText('🟡', px, py);
+        ctx.fillText('👻', gx, gy);
+
+        const dist = Math.hypot(px - gx, py - gy);
+        if (dist < 20) {
+          statusMsg.textContent = '👻 Caught by Ghost! Game Over!';
+          closeGameView();
+          return;
+        }
+
+        currentGameLoop = requestAnimationFrame(loop);
+      }
+      loop();
+    }
+
+    // 5. FLAPPY BAT
+    function initFlappy(canvas, ctx, statusMsg) {
+      let batY = 200, velocity = 0, gravity = 0.4;
+      let pipeX = canvas.width, pipeGap = 120, pipeTop = 100;
+
+      canvas.onclick = () => { velocity = -7; };
+
+      function loop() {
+        velocity += gravity;
+        batY += velocity;
+        pipeX -= 3;
+
+        if (pipeX < -50) {
+          pipeX = canvas.width;
+          pipeTop = Math.random() * (canvas.height - 200) + 50;
+        }
+
+        ctx.fillStyle = '#090514';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Pipes
+        ctx.fillStyle = '#ea580c';
+        ctx.fillRect(pipeX, 0, 40, pipeTop);
+        ctx.fillRect(pipeX, pipeTop + pipeGap, 40, canvas.height);
+
+        // Bat
+        ctx.font = '24px serif';
+        ctx.fillText('🦇', 80, batY);
+
+        if (batY > canvas.height || batY < 0 || (pipeX < 100 && pipeX > 40 && (batY < pipeTop || batY > pipeTop + pipeGap))) {
+          statusMsg.textContent = '💀 Collided! Game Over!';
+          closeGameView();
+          return;
+        }
+
+        currentGameLoop = requestAnimationFrame(loop);
+      }
+      loop();
+    }
+
+    // 6. SPOOKY CANDY CLICKER
+    function initClicker(canvas, ctx, statusMsg) {
+      let clicks = 0;
+
+      function render() {
+        ctx.fillStyle = '#11051e';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.font = 'bold 30px Orbitron';
+        ctx.fillStyle = '#f97316';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Candies: ${clicks}`, canvas.width / 2, 80);
+
+        ctx.font = '80px serif';
+        ctx.fillText('🍬', canvas.width / 2, canvas.height / 2 + 20);
+      }
+
+      canvas.onclick = () => {
+        clicks++;
+        render();
+      };
+      render();
+    }
+
+    // 7. MEMORY MATCH
+    function initMemory(canvas, ctx, statusMsg) {
+      ctx.fillStyle = '#050505';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.font = '20px Outfit';
+      ctx.fillStyle = '#ea580c';
+      ctx.textAlign = 'center';
+      ctx.fillText('Halloween Memory Challenge Unlocked!', canvas.width / 2, canvas.height / 2);
+    }
+
+    // 8. BRICK BREAKER
+    function initBricks(canvas, ctx, statusMsg) {
+      ctx.fillStyle = '#050505';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.font = '20px Outfit';
+      ctx.fillStyle = '#ea580c';
+      ctx.textAlign = 'center';
+      ctx.fillText('Graveyard Bricks Unlocked!', canvas.width / 2, canvas.height / 2);
+    }
+
+    // --- EXTERNAL WEBSITE MODAL & FULL SCREEN ---
+    function openWebsiteModal(url, title) {
+      const modal = document.getElementById('website-modal');
+      const iframe = document.getElementById('modal-iframe');
+      const modalTitle = document.getElementById('modal-title');
+
+      if (iframe) iframe.src = url;
+      if (modalTitle) modalTitle.textContent = title;
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+    }
+
+    function closeWebsiteModal() {
+      const modal = document.getElementById('website-modal');
+      const iframe = document.getElementById('modal-iframe');
+      if (iframe) iframe.src = '';
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function toggleNativeFullscreen() {
+      const modal = document.getElementById('website-modal');
+      if (!document.fullscreenElement) {
+        if (modal.requestFullscreen) modal.requestFullscreen();
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    // --- ADMIN ACCESS MODAL SYSTEM ---
+    function openAdminAuthModal() {
+      const pModal = document.getElementById('passcode-modal');
+      const input = document.getElementById('secret-passcode-input');
+      const err = document.getElementById('passcode-error');
+      if (err) err.classList.add('hidden');
+      if (input) input.value = '';
+      if (pModal) pModal.classList.remove('hidden');
+    }
+
+    function closePasscodeModal() {
+      const pModal = document.getElementById('passcode-modal');
+      if (pModal) pModal.classList.add('hidden');
+    }
+
+    function verifyPasscode() {
+      const input = document.getElementById('secret-passcode-input');
+      const err = document.getElementById('passcode-error');
+      if (input && input.value === 'stefanandjaxonknowthis') {
+        closePasscodeModal();
+        openAdminModal();
+      } else {
+        if (err) err.classList.remove('hidden');
+      }
+    }
+
+    function openAdminModal() {
+      const aModal = document.getElementById('admin-modal');
+      if (aModal) aModal.classList.remove('hidden');
+    }
+
+    function closeAdminModal() {
+      const aModal = document.getElementById('admin-modal');
+      if (aModal) aModal.classList.add('hidden');
+    }
+
+    // --- SECRET ADMIN PANEL ACTIONS ---
+    function adminAddCoins(amt) {
+      const input = document.getElementById('admin-coin-input');
+      const val = amt || parseInt(input.value || '0');
+      if (!isNaN(val) && val > 0) {
+        addCoins(val);
+        alert(`Successfully injected ${val} 🎃 Coins!`);
+      }
+    }
+
+    function adminUnlockAllGames() {
+      unlockedGames = ['pacman', 'flappy', 'clicker', 'memory', 'bricks'];
+      localStorage.setItem('sjg_unlocked', JSON.stringify(unlockedGames));
+      updateUnlockedCards();
+      alert('All premium games are now unlocked for FREE!');
+    }
+
+    function toggleModdedTheme() {
+      isModdedTheme = !isModdedTheme;
+      const body = document.body;
+      const badge = document.getElementById('modded-badge');
+      const brand = document.getElementById('brand-title');
+      const status = document.getElementById('modded-status');
+
+      if (isModdedTheme) {
+        body.className = 'theme-modded spooky-bg min-h-screen flex flex-col justify-between overflow-hidden';
+        if (badge) badge.classList.remove('hidden');
+        if (brand) {
+          brand.textContent = 'STEFAN & JAXON MODDED GAMES';
+          brand.className = 'text-xl sm:text-2xl font-black font-modded text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500 tracking-wider';
+        }
+        if (status) status.textContent = 'Status: Activated';
+      } else {
+        body.className = 'theme-spooky spooky-bg min-h-screen flex flex-col justify-between overflow-hidden';
+        if (badge) badge.classList.add('hidden');
+        if (brand) {
+          brand.textContent = 'STEFANJAXONGAMES';
+          brand.className = 'text-xl sm:text-2xl font-black font-spooky text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-yellow-400 to-red-500 tracking-wider';
+        }
+        if (status) status.textContent = 'Status: Disabled';
+      }
+    }
+
+    function adminPlayYouTube() {
+      const input = document.getElementById('youtube-url-input');
+      if (!input || !input.value) return;
+
+      let val = input.value.trim();
+      let videoId = val;
+
+      if (val.includes('v=')) {
+        videoId = val.split('v=')[1].split('&')[0];
+      } else if (val.includes('youtu.be/')) {
+        videoId = val.split('youtu.be/')[1].split('?')[0];
+      }
+
+      const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1`;
+      closeAdminModal();
+      openWebsiteModal(embedUrl, 'Secret Unblocked YouTube Player');
+    }
+
+    // --- KEYBOARD SHORTCUT (CTRL + SHIFT + A) FOR ADMIN ---
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+        e.preventDefault();
+        openAdminAuthModal();
+      }
+    });
+  </script>
+</body>
+</html>
