@@ -1379,7 +1379,17 @@
   </script>
 <script>
 (() => {
-const SERVER_URL = location.protocol.startsWith('http') ? '' : 'http://localhost:3000';
+const SERVER_URL = (() => {
+  const h = location.hostname;
+  if (/onrender\.com$/.test(h) || h === 'localhost' || h === '127.0.0.1') return '';
+  if (!location.protocol.startsWith('http')) return 'http://localhost:3000';
+  let u = localStorage.getItem('sjg_server');
+  if (!u) {
+    u = prompt('Paste your Render server link (like https://yourname.onrender.com):', 'https://stefanjax4-github-io.onrender.com');
+    if (u) { u = u.trim().replace(/\/+$/, ''); localStorage.setItem('sjg_server', u); }
+  }
+  return u || '';
+})();
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const TOK = 'sjg_token';
@@ -1396,7 +1406,7 @@ async function api(a, d = {}) {
   try {
     const r = await fetch(SERVER_URL + '/api/' + a, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...d, token: localStorage.getItem(TOK) }) });
     return await r.json();
-  } catch { return { error: 'Cannot reach the server. Is it running?' }; }
+  } catch { if (SERVER_URL) localStorage.removeItem('sjg_server'); return { error: 'Cannot reach the server. Refresh the page and re-enter your Render link.' }; }
 }
 function overlay(id, html) {
   const o = $(id); if (o) o.remove();
