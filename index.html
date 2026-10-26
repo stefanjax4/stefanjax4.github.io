@@ -1377,5 +1377,354 @@
       }
     });
   </script>
+<script>
+(() => {
+const SERVER_URL = location.protocol.startsWith('http') ? '' : 'http://localhost:3000';
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const TOK = 'sjg_token';
+let me = null, lastCoins = 0, lastUnl = '[]', peer = null, lastId = 0, adminPass = null, syncT = null, S = null, sigCache = '';
+const box = 'bg-gray-950 border-2 border-orange-600/70 rounded-2xl w-full max-w-md p-6 shadow-2xl flex flex-col gap-3 text-center max-h-[92vh] overflow-y-auto';
+const inp = 'w-full bg-black border border-orange-600/70 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-yellow-400';
+const btn = 'w-full py-2.5 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-extrabold rounded-xl';
+
+const st = document.createElement('style');
+st.textContent = 'input,textarea{user-select:text!important}';
+document.head.appendChild(st);
+
+async function api(a, d = {}) {
+  try {
+    const r = await fetch(SERVER_URL + '/api/' + a, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...d, token: localStorage.getItem(TOK) }) });
+    return await r.json();
+  } catch { return { error: 'Cannot reach the server. Is it running?' }; }
+}
+function overlay(id, html) {
+  const o = $(id); if (o) o.remove();
+  const d = document.createElement('div');
+  d.id = id; d.className = 'fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4';
+  d.innerHTML = html; document.body.appendChild(d); return d;
+}
+const hide = id => { const o = $(id); if (o) o.remove(); };
+
+// ---------- TERMS ----------
+const TERMS = [
+  ['1. Welcome', 'STEFANJAXONGAMES ("the Site") is a free, fan-made Halloween arcade made by Stefan and Jaxon. By using the Site you agree to these Terms. If you do not agree, please do not use it.'],
+  ['2. Who can play', 'You should be at least 13 years old. If you are under 18, ask a parent or guardian before creating an account or chatting with others.'],
+  ['3. Your account', 'Pick a username and a password you do not use anywhere else. Keep your password secret - you are responsible for what happens on your account. Passwords are stored hashed on our server, but no system is perfectly secure.'],
+  ['4. Pumpkin Coins', 'Pumpkin Coins (🎃) are a fun in-game score only. They have no cash value, cannot be bought or sold for real money, and can be changed, reset or removed at any time. Signed-in coins are saved to your account. Guests\' coins are NOT saved.'],
+  ['5. Chat & friends safety', 'Be kind. No bullying, hate, threats, adult content, spam or scams. Never share your real name, address, school, phone number, passwords or photos with people you meet online. Only friends can message you. If someone makes you uncomfortable, stop talking to them and tell a trusted adult.'],
+  ['6. Cheating & abuse', 'Do not hack, exploit bugs, farm coins with scripts, impersonate others or try to break the Site or server. Admins may ban accounts from the Site or reset their coins and progress at any time, with or without warning.'],
+  ['7. Bans', 'Banned accounts cannot sign in or use social features. If you think a ban was a mistake, ask Stefan or Jaxon politely.'],
+  ['8. Third-party portals', 'The "Unblocked Websites" tab opens websites we do not own or control. We are not responsible for their content, safety or availability. Use them at your own risk and follow your school or workplace rules.'],
+  ['9. Privacy', 'We store only what is needed to run the Site: your username, hashed password, coins, unlocked games, friend list and chat messages. We do not sell your data. Chat messages may be reviewed by admins to keep the Site safe.'],
+  ['10. No warranty', 'The Site is provided "as is". Games may have bugs, progress may be lost, and the Site may go offline or change at any time. We are not liable for any loss or damage from using the Site.'],
+  ['11. Changes', 'We may update these Terms. Continuing to use the Site means you accept the latest version.']
+];
+window.showTerms = () => {
+  overlay('terms', `<div class="${box} max-w-2xl text-left"><div class="flex justify-between items-center"><h3 class="text-3xl font-spooky text-orange-400">📜 Terms & Conditions</h3><button id="tclose" class="text-gray-400 hover:text-white text-xl">✕</button></div>${TERMS.map(t => `<div><h4 class="font-bold text-yellow-400">${t[0]}</h4><p class="text-sm text-gray-300">${t[1]}</p></div>`).join('')}<button id="tok" class="${btn}">I understand</button></div>`);
+  $('tclose').onclick = $('tok').onclick = () => hide('terms');
+};
+const tb = document.createElement('button');
+tb.innerHTML = '<i class="fa-solid fa-scroll"></i> Terms';
+tb.className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-900 border border-orange-500/40 text-orange-400 hover:bg-orange-950';
+tb.onclick = showTerms;
+$('brand-title').before(tb);
+
+// ---------- ACCOUNTS ----------
+function applyState(s) {
+  me = s.name; coinBalance = lastCoins = s.coins; unlockedGames = s.unlocked; lastUnl = JSON.stringify(s.unlocked);
+  localStorage.setItem('sjg_coins', coinBalance); localStorage.setItem('sjg_unlocked', lastUnl);
+  S = s; refreshHdr(); coinDisp(); updateUnlockedCards(); renderSoc(true);
+}
+const coinDisp = () => { const e = $('coin-count-display'); if (e) e.textContent = coinBalance; };
+const origUCD = window.updateCoinDisplay;
+window.updateCoinDisplay = () => {
+  origUCD();
+  if (!me) { localStorage.removeItem('sjg_coins'); localStorage.removeItem('sjg_unlocked'); return; }
+  clearTimeout(syncT); syncT = setTimeout(flush, 500);
+};
+async function flush() {
+  if (!me) return;
+  clearTimeout(syncT);
+  const delta = coinBalance - lastCoins, un = JSON.stringify(unlockedGames);
+  if (!delta && un === lastUnl) return;
+  const r = await api('sync', { delta, unlocked: unlockedGames });
+  if (r.state) { lastCoins = r.state.coins; lastUnl = JSON.stringify(r.state.unlocked); coinBalance = lastCoins; S = r.state; coinDisp(); }
+  else if (r.error === 'banned') banned();
+}
+function banned() {
+  localStorage.removeItem(TOK); me = null;
+  overlay('banned', `<div class="${box}"><div class="text-6xl">🚫</div><h3 class="text-2xl font-extrabold text-red-500">You are banned</h3><p class="text-sm text-gray-300">This account has been banned from STEFANJAXONGAMES.</p></div>`).style.zIndex = 9999;
+}
+function refreshHdr() {
+  let b = $('acct-btn');
+  if (!b) { b = document.createElement('button'); b.id = 'acct-btn'; b.className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-900 border border-orange-500/40 text-orange-400 hover:bg-orange-950'; document.querySelector('[onclick="openAdminAuthModal()"]').before(b); }
+  b.innerHTML = me ? `<i class="fa-solid fa-user"></i> ${esc(me)} · Log out` : '<i class="fa-solid fa-right-to-bracket"></i> Sign in';
+  b.onclick = me ? () => { localStorage.removeItem(TOK); location.reload(); } : showAuth;
+}
+function showAuth(mode = 'in') {
+  if (typeof mode !== 'string') mode = 'in';
+  const up = mode === 'up';
+  overlay('auth', `<div class="${box}"><h3 class="text-3xl font-spooky text-orange-400">Welcome, Brave Soul 🎃</h3>
+  <p class="text-xs text-gray-400">Sign in or create an account to save your coins, unlock games and chat with friends.</p>
+  <div class="flex gap-2"><button id="m-in" class="flex-1 py-2 rounded-lg font-bold ${up ? 'bg-gray-900 text-orange-400' : 'bg-orange-600 text-white'}">Sign In</button><button id="m-up" class="flex-1 py-2 rounded-lg font-bold ${up ? 'bg-orange-600 text-white' : 'bg-gray-900 text-orange-400'}">Create Account</button></div>
+  <input id="au" class="${inp}" placeholder="Username" maxlength="16" autocomplete="username"><input id="ap" type="password" class="${inp}" placeholder="Password (6+ characters)" autocomplete="${up ? 'new-password' : 'current-password'}">
+  ${up ? '<label class="text-xs text-gray-400 text-left flex gap-2 items-start"><input type="checkbox" id="atos" class="mt-0.5"><span>I am 13+ and agree to the <a href="#" id="alink" class="text-orange-400 underline">Terms & Conditions</a></span></label>' : ''}
+  <p id="aerr" class="text-xs text-red-500 font-bold min-h-[16px]"></p>
+  <button id="ago" class="${btn}">${up ? 'Create Account' : 'Sign In'}</button><button id="alater" class="text-xs text-gray-500 hover:text-gray-300 underline">Maybe later</button></div>`);
+  $('m-in').onclick = () => showAuth('in'); $('m-up').onclick = () => showAuth('up');
+  if (up) $('alink').onclick = e => { e.preventDefault(); showTerms(); };
+  $('alater').onclick = showWarn;
+  const go = async () => {
+    if (up && !$('atos').checked) return ($('aerr').textContent = 'Please accept the Terms & Conditions.');
+    $('aerr').textContent = '...';
+    const r = await api(up ? 'register' : 'login', { username: $('au').value, password: $('ap').value });
+    if (r.error) return ($('aerr').textContent = r.error);
+    localStorage.setItem(TOK, r.token); applyState(r.state); hide('auth'); startPoll();
+  };
+  $('ago').onclick = go; $('ap').onkeyup = e => e.key === 'Enter' && go();
+}
+function showWarn() {
+  overlay('warn', `<div class="${box} border-red-600"><div class="text-5xl">⚠️</div><h3 class="text-xl font-extrabold text-red-400">Warning!</h3><p class="text-sm text-gray-200">Your 🎃 coins won't save without an account. If you close or refresh the page, they're gone.</p><button id="wsure" class="${btn}">I'm sure</button><button id="wback" class="w-full py-2 bg-gray-800 text-white font-bold rounded-xl">Go back</button></div>`);
+  $('wback').onclick = () => { hide('warn'); };
+  $('wsure').onclick = () => { hide('warn'); hide('auth'); me = null; coinBalance = 0; unlockedGames = []; updateCoinDisplay(); updateUnlockedCards(); refreshHdr(); };
+}
+const origEnter = window.enterSite;
+window.enterSite = async () => {
+  origEnter(); refreshHdr();
+  if (localStorage.getItem(TOK)) {
+    const r = await api('poll', { peer: '', since: 0 });
+    if (r.state) { applyState(r.state); startPoll(); return; }
+    if (r.error === 'banned') return banned();
+    localStorage.removeItem(TOK);
+  }
+  showAuth();
+};
+
+// ---------- FRIENDS & CHAT ----------
+const sb = document.createElement('button');
+sb.id = 'soc-btn'; sb.className = 'fixed bottom-5 right-5 z-[90] w-14 h-14 rounded-full bg-gradient-to-br from-orange-600 to-red-600 text-white text-2xl shadow-2xl border-2 border-orange-300/50';
+sb.innerHTML = '💬<span id="soc-badge" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center"></span>';
+const sp = document.createElement('div');
+sp.id = 'soc-panel'; sp.dataset.open = '0';
+sp.className = 'hidden fixed bottom-24 right-5 z-[90] w-80 max-w-[92vw] h-[28rem] max-h-[70vh] bg-gray-950 border-2 border-orange-600/60 rounded-2xl shadow-2xl flex flex-col p-3 gap-2';
+document.body.append(sb, sp);
+sb.onclick = () => {
+  if (!me) return showAuth();
+  const open = sp.dataset.open !== '1'; sp.dataset.open = open ? '1' : '0'; sp.classList.toggle('hidden', !open); renderSoc(true);
+};
+function renderSoc(force) {
+  const badge = $('soc-badge');
+  if (S) { badge.textContent = S.requests.length; badge.classList.toggle('hidden', !S.requests.length); }
+  if (sp.dataset.open !== '1' || !S) return;
+  const sig = JSON.stringify([S.friends, S.requests, peer]);
+  if (!force && sig === sigCache) return;
+  sigCache = sig;
+  if (!peer) {
+    sp.innerHTML = `<h4 class="font-extrabold text-orange-400">👥 Friends</h4>
+    <div class="flex gap-2"><input id="fadd" class="${inp} !py-1.5" placeholder="Add by username"><button id="fgo" class="px-3 bg-orange-600 text-white rounded-xl font-bold">Add</button></div><p id="fmsg" class="text-[11px] text-amber-400 min-h-[14px]"></p>
+    <div class="flex-1 overflow-y-auto flex flex-col gap-1">
+    ${S.requests.map(n => `<div class="flex justify-between items-center bg-purple-950/50 rounded-lg px-2 py-1.5 text-sm"><span>${esc(n)} wants to be friends</span><button data-acc="${esc(n)}" class="px-2 py-0.5 bg-green-600 rounded text-xs font-bold">Accept</button></div>`).join('')}
+    ${S.friends.map(n => `<button data-chat="${esc(n)}" class="text-left bg-gray-900 hover:bg-orange-950 rounded-lg px-3 py-2 text-sm font-bold text-white">💬 ${esc(n)}</button>`).join('') || (S.requests.length ? '' : '<p class="text-xs text-gray-500 text-center mt-4">No friends yet. Add someone by username!</p>')}</div>`;
+    const add = async n => { const r = await api('add', { name: n }); if (r.error) $('fmsg').textContent = r.error; else { S = r.state; renderSoc(true); $('fmsg').textContent = 'Request sent / updated!'; } };
+    $('fgo').onclick = () => add($('fadd').value);
+    sp.querySelectorAll('[data-acc]').forEach(b => b.onclick = () => add(b.dataset.acc));
+    sp.querySelectorAll('[data-chat]').forEach(b => b.onclick = () => { peer = b.dataset.chat; lastId = 0; renderSoc(true); });
+  } else {
+    sp.innerHTML = `<div class="flex items-center gap-2"><button id="cback" class="text-orange-400 font-bold">←</button><h4 class="font-extrabold text-white">${esc(peer)}</h4></div>
+    <div id="msgs" class="flex-1 overflow-y-auto flex flex-col gap-1 bg-black/60 rounded-lg p-2"></div>
+    <div class="flex gap-2"><input id="ctext" class="${inp} !py-1.5" maxlength="500" placeholder="Message..."><button id="csend" class="px-3 bg-orange-600 text-white rounded-xl font-bold">Send</button></div>
+    <div class="flex gap-2 items-center"><input id="camt" type="number" min="1" class="${inp} !py-1 !w-24" placeholder="Coins"><button id="ccoin" class="flex-1 bg-amber-700 text-white text-xs font-bold rounded-xl py-1.5">Send 🎃 coins</button></div><p id="cmsg" class="text-[11px] text-amber-400 min-h-[12px]"></p>`;
+    $('cback').onclick = () => { peer = null; renderSoc(true); };
+    const send = async () => { const t = $('ctext').value; if (!t.trim()) return; $('ctext').value = ''; const r = await api('chat', { to: peer, text: t }); if (r.error) $('cmsg').textContent = r.error; else poll(); };
+    $('csend').onclick = send; $('ctext').onkeyup = e => e.key === 'Enter' && send();
+    $('ccoin').onclick = async () => {
+      await flush(); const r = await api('send', { to: peer, amount: $('camt').value });
+      if (r.error) $('cmsg').textContent = r.error; else { coinBalance = lastCoins = r.state.coins; S = r.state; coinDisp(); $('cmsg').textContent = 'Coins sent! 🎃'; }
+    };
+    poll();
+  }
+}
+async function poll() {
+  if (!me) return;
+  const r = await api('poll', { peer, since: lastId });
+  if (r.error === 'banned') return banned();
+  if (!r.state) return;
+  S = r.state;
+  if (coinBalance === lastCoins && r.state.coins !== lastCoins) { coinBalance = lastCoins = r.state.coins; coinDisp(); }
+  if (JSON.stringify(r.state.unlocked) !== lastUnl && JSON.stringify(unlockedGames) === lastUnl && r.state.unlocked.length < unlockedGames.length) return location.reload();
+  const m = $('msgs');
+  if (m && r.msgs) r.msgs.forEach(x => {
+    if (x.id <= lastId) return; lastId = x.id;
+    const mine = x.from.toLowerCase() === me.toLowerCase();
+    const d = document.createElement('div');
+    d.className = 'text-sm px-2 py-1 rounded-lg max-w-[85%] break-words ' + (mine ? 'self-end bg-orange-700 text-white' : 'self-start bg-gray-800 text-gray-100');
+    d.textContent = x.text; m.appendChild(d); m.scrollTop = m.scrollHeight;
+  });
+  renderSoc(false);
+}
+let pollT = null;
+function startPoll() { clearInterval(pollT); pollT = setInterval(poll, 2000); }
+
+// ---------- ADMIN ----------
+window.verifyPasscode = async () => {
+  const v = $('secret-passcode-input').value, e = $('passcode-error');
+  const r = await api('admin', { pass: v, op: 'list' });
+  if (r.users) { adminPass = v; closePasscodeModal(); openAdminModal(); adminPanel(r.users); }
+  else { e.textContent = '❌ ' + (r.error || 'Incorrect passcode!'); e.classList.remove('hidden'); }
+};
+function adminPanel(users) {
+  const grid = document.querySelector('#admin-modal .grid');
+  document.querySelector('#admin-modal > div').classList.add('max-h-[92vh]', 'overflow-y-auto');
+  let p = $('adm-users');
+  if (!p) { p = document.createElement('div'); p.id = 'adm-users'; p.className = 'bg-gray-900/90 border border-red-900/60 p-4 rounded-xl flex flex-col gap-2 sm:col-span-2'; grid.prepend(p); }
+  p.innerHTML = `<label class="text-xs font-bold text-red-400 uppercase tracking-widest">🛡️ Player Management</label>
+  <div class="flex gap-2"><input id="ad-user" placeholder="Username" class="${inp} !py-1.5"><input id="ad-amt" type="number" placeholder="Coins" class="${inp} !py-1.5 !w-24"></div>
+  <div class="grid grid-cols-2 gap-2 text-xs font-bold text-white">
+  <button data-op="give" class="py-1.5 bg-amber-600 rounded-lg">🎃 Give coins</button><button data-op="reset" class="py-1.5 bg-purple-700 rounded-lg">♻️ Reset progress</button>
+  <button data-op="ban" class="py-1.5 bg-red-700 rounded-lg">🚫 Ban</button><button data-op="unban" class="py-1.5 bg-green-700 rounded-lg">✅ Unban</button></div>
+  <p id="ad-msg" class="text-xs text-amber-400 min-h-[14px]"></p>
+  <div class="max-h-40 overflow-y-auto flex flex-col gap-1">${users.map(u => `<button data-pick="${esc(u.name)}" class="text-left text-xs bg-black/60 hover:bg-gray-800 rounded px-2 py-1 flex justify-between"><span>${esc(u.name)} ${u.banned ? '🚫' : ''}</span><span class="text-amber-400">${u.coins} 🎃</span></button>`).join('') || '<p class="text-xs text-gray-500">No players yet.</p>'}</div>`;
+  p.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => $('ad-user').value = b.dataset.pick);
+  p.querySelectorAll('[data-op]').forEach(b => b.onclick = async () => {
+    const op = b.dataset.op, user = $('ad-user').value;
+    if (op === 'reset' && !confirm('Reset ALL progress (coins + unlocked games) for ' + user + '?')) return;
+    if (op === 'ban' && !confirm('Ban ' + user + ' from the website?')) return;
+    const r = await api('admin', { pass: adminPass, op, user, amount: $('ad-amt').value });
+    const l = await api('admin', { pass: adminPass, op: 'list' });
+    if (l.users) adminPanel(l.users);
+    $('ad-msg').textContent = r.error ? '❌ ' + r.error : '✅ Done: ' + op + ' ' + user;
+  });
+}
+
+// ---------- BETTER GAMES ----------
+const origClose = window.closeGameView;
+window.closeGameView = () => { origClose(); document.onkeydown = null; const c = $('active-canvas'); c.onclick = null; c.onmousemove = null; };
+
+window.initTicTacToe = (canvas, ctx, msg) => {
+  const W = canvas.width, H = canvas.height, LIM = 5000, L = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+  let b, over, turn, dl;
+  const win = bd => { for (const l of L) if (bd[l[0]] && bd[l[0]] === bd[l[1]] && bd[l[0]] === bd[l[2]]) return bd[l[0]]; return bd.includes('') ? null : 'TIE'; };
+  const mm = (bd, pl, d) => { const r = win(bd); if (r === 'O') return 10 - d; if (r === 'X') return d - 10; if (r === 'TIE') return 0; let bs = pl === 'O' ? -99 : 99; bd.forEach((v, i) => { if (v) return; bd[i] = pl; const s = mm(bd, pl === 'O' ? 'X' : 'O', d + 1); bd[i] = ''; bs = pl === 'O' ? Math.max(bs, s) : Math.min(bs, s); }); return bs; };
+  const empties = () => b.map((v, i) => v ? null : i).filter(i => i !== null);
+  const aiPick = () => { const e = empties(); if (Math.random() < 0.2) return e[Math.random() * e.length | 0]; let bi = e[0], bs = -99; e.forEach(i => { b[i] = 'O'; const s = mm(b, 'X', 1); b[i] = ''; if (s > bs) { bs = s; bi = i; } }); return bi; };
+  function draw() {
+    ctx.fillStyle = '#080510'; ctx.fillRect(0, 0, W, H);
+    const bh = H - 14, w = W / 3, h = bh / 3;
+    ctx.strokeStyle = '#ea580c'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.shadowColor = '#f97316'; ctx.shadowBlur = 12;
+    for (let i = 1; i < 3; i++) { ctx.beginPath(); ctx.moveTo(i * w, 12); ctx.lineTo(i * w, bh - 6); ctx.stroke(); ctx.beginPath(); ctx.moveTo(12, i * h); ctx.lineTo(W - 12, i * h); ctx.stroke(); }
+    ctx.shadowBlur = 0; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '60px serif';
+    b.forEach((c, i) => {
+      const x = (i % 3) * w + w / 2, y = (i / 3 | 0) * h + h / 2;
+      if (c === 'X') { ctx.strokeStyle = '#fb923c'; ctx.lineWidth = 9; ctx.beginPath(); ctx.moveTo(x - 28, y - 28); ctx.lineTo(x + 28, y + 28); ctx.moveTo(x + 28, y - 28); ctx.lineTo(x - 28, y + 28); ctx.stroke(); }
+      else if (c === 'O') ctx.fillText('🎃', x, y + 3);
+    });
+    const f = over || !turn ? 0 : Math.max(0, (dl - Date.now()) / LIM);
+    ctx.fillStyle = '#1f1f1f'; ctx.fillRect(0, H - 10, W, 10);
+    ctx.fillStyle = f > .4 ? '#22c55e' : f > .2 ? '#eab308' : '#dc2626'; ctx.fillRect(0, H - 10, W * f, 10);
+  }
+  function end(r) {
+    over = true;
+    if (r === 'X') { msg.textContent = '🎉 YOU WIN! +5 🎃 Coins! Click to play again.'; addCoins(5); }
+    else if (r === 'O') msg.textContent = '💀 The AI won! Click to play again.';
+    else msg.textContent = "🤝 It's a tie! Click to play again.";
+  }
+  function place(i, note) {
+    b[i] = 'X'; const r = win(b); draw();
+    if (r) return end(r);
+    turn = false; msg.textContent = note || '🎃 AI is thinking...';
+    setTimeout(() => {
+      if (over) return; b[aiPick()] = 'O'; const r2 = win(b); draw();
+      if (r2) return end(r2);
+      turn = true; dl = Date.now() + LIM;
+    }, 500);
+  }
+  function reset() { b = Array(9).fill(''); over = false; turn = true; dl = Date.now() + LIM; msg.textContent = ''; draw(); }
+  canvas.onclick = e => {
+    if (over) return reset();
+    if (!turn) return;
+    const r = canvas.getBoundingClientRect();
+    const col = Math.min(2, (e.clientX - r.left) / r.width * 3 | 0), row = Math.min(2, (e.clientY - r.top) / r.height * 3 | 0);
+    const i = row * 3 + col; if (!b[i]) place(i);
+  };
+  currentGameLoop = setInterval(() => {
+    if (!over && turn) {
+      const left = dl - Date.now();
+      if (left <= 0) { const e = empties(); place(e[Math.random() * e.length | 0], '⏰ Too slow! A random square was picked for you.'); }
+      else if (!msg.textContent.startsWith('⏰')) msg.textContent = `⏱️ Your move: ${(left / 1000).toFixed(1)}s`;
+    }
+    draw();
+  }, 100);
+  reset();
+};
+
+window.initSnake = (canvas, ctx, msg) => {
+  const G = 20, C = canvas.width / G | 0, R = canvas.height / G | 0;
+  let sn, fd, dir, q, score, dead;
+  snakeSecondsPlayed = 0; awarded1Min = awarded10Min = false;
+  const hud = $('snake-timer-hud'); hud.textContent = '⏱️ Playtime: 0m 0s';
+  snakeTimerInterval = setInterval(() => {
+    if (dead) return;
+    snakeSecondsPlayed++;
+    hud.textContent = `⏱️ Playtime: ${snakeSecondsPlayed / 60 | 0}m ${snakeSecondsPlayed % 60}s`;
+    if (snakeSecondsPlayed >= 60 && !awarded1Min) { awarded1Min = true; addCoins(5); msg.textContent = '🎉 1 Minute Bonus! +5 🎃 Coins!'; }
+    if (snakeSecondsPlayed >= 600 && !awarded10Min) { awarded10Min = true; addCoins(50); msg.textContent = '🏆 10 Minute Master! +50 🎃 Coins!'; }
+  }, 1000);
+  function food() { do { fd = { x: Math.random() * C | 0, y: Math.random() * R | 0 }; } while (sn.some(s => s.x === fd.x && s.y === fd.y)); }
+  function reset() { sn = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }]; dir = { x: 1, y: 0 }; q = []; score = 0; dead = false; food(); msg.textContent = 'Arrow keys / WASD to move'; }
+  const turn = (x, y) => { const l = q.length ? q[q.length - 1] : dir; if (l.x === -x && l.y === -y || l.x === x && l.y === y || q.length > 2) return; q.push({ x, y }); };
+  document.onkeydown = e => {
+    const k = e.key.toLowerCase();
+    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k)) e.preventDefault();
+    if (dead && (k === 'enter' || k === ' ')) return reset();
+    if (k === 'arrowup' || k === 'w') turn(0, -1); else if (k === 'arrowdown' || k === 's') turn(0, 1);
+    else if (k === 'arrowleft' || k === 'a') turn(-1, 0); else if (k === 'arrowright' || k === 'd') turn(1, 0);
+  };
+  canvas.onclick = () => { if (dead) reset(); };
+  const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); ctx.fill(); };
+  function draw() {
+    for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) { ctx.fillStyle = (x + y) % 2 ? '#0d0716' : '#120a1d'; ctx.fillRect(x * G, y * G, G, G); }
+    const p = 1 + Math.sin(Date.now() / 150) * .12;
+    ctx.save(); ctx.shadowColor = '#f97316'; ctx.shadowBlur = 16; ctx.font = `${16 * p}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('🎃', fd.x * G + G / 2, fd.y * G + G / 2 + 1); ctx.restore();
+    for (let i = sn.length - 1; i >= 0; i--) {
+      const s = sn[i], t = i / sn.length, inset = i === 0 ? 0 : 1 + t * 3;
+      ctx.save(); ctx.shadowColor = '#22c55e'; ctx.shadowBlur = i === 0 ? 14 : 6;
+      ctx.fillStyle = `hsl(${140 - t * 25},70%,${55 - t * 22}%)`;
+      rr(s.x * G + inset, s.y * G + inset, G - inset * 2, G - inset * 2, 7); ctx.restore();
+      if (i > 0 && i % 3 === 0) { ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.arc(s.x * G + G / 2, s.y * G + G / 2, 3, 0, 7); ctx.fill(); }
+    }
+    const h = sn[0], cx = h.x * G + G / 2, cy = h.y * G + G / 2, px = -dir.y, py = dir.x;
+    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx + dir.x * 9, cy + dir.y * 9); ctx.lineTo(cx + dir.x * 15, cy + dir.y * 15); ctx.stroke();
+    for (const s of [-1, 1]) {
+      const ex = cx + dir.x * 3 + px * 4 * s, ey = cy + dir.y * 3 + py * 4 * s;
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ex, ey, 3, 0, 7); ctx.fill();
+      ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(ex + dir.x, ey + dir.y, 1.5, 0, 7); ctx.fill();
+    }
+    ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 13px Outfit'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText('Score ' + score, 6, 4);
+    if (dead) {
+      ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.textAlign = 'center'; ctx.fillStyle = '#ef4444'; ctx.font = '42px Creepster, cursive'; ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 40);
+      ctx.fillStyle = '#fff'; ctx.font = '16px Outfit'; ctx.fillText(`Score: ${score}  🎃 +${score} coins earned`, canvas.width / 2, canvas.height / 2 + 5);
+      ctx.fillStyle = '#fb923c'; ctx.fillText('Click or press Enter to play again', canvas.width / 2, canvas.height / 2 + 35);
+    }
+  }
+  currentGameLoop = setInterval(() => {
+    if (!dead) {
+      dir = q.shift() || dir;
+      const h = { x: sn[0].x + dir.x, y: sn[0].y + dir.y };
+      if (h.x < 0 || h.x >= C || h.y < 0 || h.y >= R || sn.slice(0, -1).some(s => s.x === h.x && s.y === h.y)) { dead = true; msg.textContent = '💀 Game Over!'; }
+      else {
+        sn.unshift(h);
+        if (h.x === fd.x && h.y === fd.y) { score++; addCoins(1); food(); } else sn.pop();
+      }
+    }
+    draw();
+  }, 110);
+  reset();
+};
+})();
+
+</script>
 </body>
 </html>
